@@ -111,12 +111,11 @@ export const SkeletonOne = () => {
         <div className="flex flex-1 w-full h-full flex-col space-y-2  ">
           {/* TODO */}
           <Image
-            src="/linear.webp"
-            alt="header"
-            width={800}
-            height={800}
-            className="h-full w-full aspect-square object-cover object-left-top rounded-sm"
-          />
+      src="/images/batman-dark-knight-rises-iphone-x-zy4k80sb7ftv4x0r.jpg"
+      alt="Batman Dark Knight"
+      width={800} // Set the desired width
+      height={800} // Set the desired height
+    />
         </div>
       </div>
 
