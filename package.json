@@ -12,6 +12,8 @@
     "@tabler/icons-react": "^3.19.0",
     "clsx": "^2.1.1",
     "cobe": "^0.6.3",
+    "env": "^0.0.2",
+    "firebase": "^11.0.2",
     "framer-motion": "^11.11.9",
     "next": "15.0.0",
     "radix-ui": "^1.0.1",
