@@ -6,7 +6,9 @@ import Navbar from "../../components/navbar";
 import { IconBrandGithub, IconBrandGoogle, IconBrandOnlyfans } from "@tabler/icons-react";
 import { auth } from "../../firebase";
 import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, GithubAuthProvider } from "firebase/auth";
-import { useRouter } from "next/navigation"; // For navigation
+import { useRouter } from "next/navigation";
+import { doc, setDoc } from "firebase/firestore"; // Firestore functions
+import { db } from "../../firebase"; // Import the Firestore instance
 
 export default function SignupFormDemo() {
   const router = useRouter();
@@ -16,6 +18,8 @@ export default function SignupFormDemo() {
     email: "",
     password: "",
     confirmPassword: "",
+    location: "", 
+    interests: "", 
   });
   const [error, setError] = useState("");
 
@@ -32,11 +36,22 @@ export default function SignupFormDemo() {
     }
 
     try {
-      await createUserWithEmailAndPassword(auth, formData.email, formData.password);
-      console.log("User registered successfully");
-      router.push("/pages/Location"); // Redirect after successful signup
+      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      const user = userCredential.user;
+
+      // Save user data in Firestore
+      await setDoc(doc(db, "users", user.uid), {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        location: formData.location,
+        interests: formData.interests,
+      });
+
+      console.log("User registered and data saved to Firestore");
+      router.push("/pages/Location");
     } catch (err) {
-      console.error("Error creating user:", err.message);
+      console.error("Error creating user or saving data:", err.message);
       setError(err.message);
     }
   };
@@ -44,7 +59,19 @@ export default function SignupFormDemo() {
   const handleGoogleLogin = async () => {
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      const userCredential = await signInWithPopup(auth, provider);
+      const user = userCredential.user;
+
+      // Save user data in Firestore
+      await setDoc(doc(db, "users", user.uid), {
+        firstName: user.displayName?.split(" ")[0] || "",
+        lastName: user.displayName?.split(" ")[1] || "",
+        email: user.email,
+        location: formData.location || "",
+        interests: formData.interests || "",
+      });
+
+      console.log("Google login successful and data saved to Firestore");
       router.push("/pages/Location");
     } catch (err) {
       console.error("Google login error:", err.message);
@@ -55,7 +82,19 @@ export default function SignupFormDemo() {
   const handleGithubLogin = async () => {
     const provider = new GithubAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      const userCredential = await signInWithPopup(auth, provider);
+      const user = userCredential.user;
+
+      // Save user data in Firestore
+      await setDoc(doc(db, "users", user.uid), {
+        firstName: user.displayName?.split(" ")[0] || "",
+        lastName: user.displayName?.split(" ")[1] || "",
+        email: user.email,
+        location: formData.location || "",
+        interests: formData.interests || "",
+      });
+
+      console.log("GitHub login successful and data saved to Firestore");
       router.push("/pages/Location");
     } catch (err) {
       console.error("GitHub login error:", err.message);
@@ -63,10 +102,8 @@ export default function SignupFormDemo() {
     }
   };
 
-  // Mock handler for OnlyFans login (as OnlyFans does not provide a public API)
   const handleOnlyFansLogin = async () => {
     console.log("OnlyFans login mock clicked");
-    // Replace with actual API integration if OnlyFans provides an API in the future
     setError("OnlyFans login option is currently unavailable");
   };
 
@@ -136,6 +173,37 @@ export default function SignupFormDemo() {
             />
           </LabelInputContainer>
 
+          {/* Location Input */}
+          <LabelInputContainer>
+            <Label htmlFor="location">Location</Label>
+            <select
+              id="location"
+              value={formData.location}
+              onChange={handleInputChange}
+              className="input-field bg-gray-100 dark:bg-gray-800 text-neutral-900 dark:text-neutral-100 rounded-md p-3 w-full focus:outline-none focus:ring-2 focus:ring-cyan-400 placeholder-black dark:placeholder-gray-400"
+            >
+              <option value="">Select your city</option>
+              <option value="Mumbai">Mumbai</option>
+              <option value="Delhi">Delhi</option>
+              <option value="Bangalore">Bangalore</option>
+              <option value="Hyderabad">Hyderabad</option>
+              <option value="Chennai">Chennai</option>
+              <option value="Kolkata">Kolkata</option>
+              <option value="Pune">Pune</option>
+            </select>
+          </LabelInputContainer>
+
+          {/* Interests Input */}
+          <LabelInputContainer>
+            <Label htmlFor="interests">Interests</Label>
+            <InputField
+              id="interests"
+              placeholder="e.g., Reading, Traveling, Coding"
+              value={formData.interests}
+              onChange={handleInputChange}
+            />
+          </LabelInputContainer>
+
           {/* Signup Button */}
           <button className="submit-button bg-gradient-to-br from-blue-500 to-purple-500 w-full text-white rounded-md h-10 font-semibold transform transition-transform duration-300 hover:scale-105">
             Sign up
@@ -148,8 +216,6 @@ export default function SignupFormDemo() {
         <div className="flex flex-col space-y-4 mt-6">
           <SocialButton icon={<IconBrandGoogle />} label="Sign up with Google" onClick={handleGoogleLogin} />
           <SocialButton icon={<IconBrandGithub />} label="Sign up with GitHub" onClick={handleGithubLogin} />
-          
-          {/* OnlyFans (mock) Login */}
           <SocialButton icon={<IconBrandOnlyfans />} label="Sign up with OnlyFans" onClick={handleOnlyFansLogin} />
         </div>
       </div>
@@ -184,13 +250,10 @@ const InputField = ({ id, placeholder, type, value, onChange }) => (
 
 const SocialButton = ({ icon, label, onClick }) => (
   <button
+    className="social-button w-full bg-gray-200 dark:bg-gray-700 rounded-md py-3 flex items-center justify-center space-x-4 text-sm font-medium hover:opacity-90 transition-opacity"
     onClick={onClick}
-    className="social-button flex space-x-2 items-center justify-start px-4 w-full text-black dark:text-white rounded-md h-10 font-medium bg-gray-50 dark:bg-zinc-900 dark:shadow-lg transform transition-transform duration-300 hover:scale-102"
   >
     {icon}
-    <span className="text-neutral-700 dark:text-neutral-300 text-sm">
-      {label}
-    </span>
-    <BottomGradient />
+    <span>{label}</span>
   </button>
 );

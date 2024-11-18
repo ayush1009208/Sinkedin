@@ -6,13 +6,30 @@ import { cn } from "../../../../utils/cn";
 import Navbar from "../../components/navbar";
 import { IconBrandGithub, IconBrandGoogle, IconBrandOnlyfans } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { auth } from "../../firebase";
 
 export default function LoginFormDemo() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setError("");
+
+    const provider = new GoogleAuthProvider();
+    try {
+      const result = await signInWithPopup(auth, provider);
+      console.log("Google sign-in successful:", result.user);
+      router.push("/pages/dashboard"); // Navigate to the dashboard or homepage
+    } catch (err) {
+      setError("Google sign-in failed. Please try again.");
+      console.error("Error during Google sign-in:", err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,7 +42,7 @@ export default function LoginFormDemo() {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       console.log("Login successful");
-      router.push("/dashboard"); // Navigate to dashboard or homepage
+      router.push("/dashboard"); // Navigate to the dashboard or homepage
     } catch (err) {
       setError("Failed to login. Please check your credentials.");
       console.error("Error during login:", err.message);
@@ -71,7 +88,11 @@ export default function LoginFormDemo() {
 
         <div className="flex flex-col space-y-4">
           <SocialButton icon={<IconBrandGithub />} label="GitHub" />
-          <SocialButton icon={<IconBrandGoogle />} label="Google" />
+          <SocialButton
+            icon={<IconBrandGoogle />}
+            label="Google"
+            onClick={handleGoogleSignIn}
+          />
           <SocialButton icon={<IconBrandOnlyfans />} label="OnlyFans" />
         </div>
 
@@ -108,8 +129,11 @@ const InputField = ({ id, placeholder, type }) => (
   />
 );
 
-const SocialButton = ({ icon, label }) => (
-  <button className="social-button flex space-x-2 items-center justify-start px-4 w-full text-black dark:text-white rounded-md h-10 font-medium bg-gray-50 dark:bg-zinc-900 dark:shadow-lg transform transition-transform duration-300 hover:scale-102">
+const SocialButton = ({ icon, label, onClick }) => (
+  <button
+    onClick={onClick}
+    className="social-button flex space-x-2 items-center justify-start px-4 w-full text-black dark:text-white rounded-md h-10 font-medium bg-gray-50 dark:bg-zinc-900 dark:shadow-lg transform transition-transform duration-300 hover:scale-102"
+  >
     {icon}
     <span className="text-neutral-700 dark:text-neutral-300 text-sm">
       {label}
